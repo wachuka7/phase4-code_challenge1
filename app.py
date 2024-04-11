@@ -29,10 +29,17 @@ def restaurants():
 
 @app.route('/restaurants/<int:id>', methods=['GET'])
 def get_restaurant(id):
-    restaurant = Restaurant.query.get(id)
-    if restaurant:
-        return jsonify(restaurant.to_dict())
-    return jsonify({"error": "Restaurant not found"}), 404
+    if request.method == 'GET':
+        restaurants=[restaurant.to_dict() for restaurant in Restaurant.query.all()]
+
+        response = make_response(
+            restaurants,
+            200
+        )
+
+        return response
+    else:
+        return f"error:Restaurant not found", 404
 
 @app.route('/restaurants/<int:id>', methods=['DELETE'])
 def delete_restaurant(id):
@@ -40,14 +47,56 @@ def delete_restaurant(id):
     if restaurant:
         db.session.delete(restaurant)
         db.session.commit()
-        return '', 204
-    return jsonify({"error": "Restaurant not found"}), 404
 
-@app.route('/pizzas', methods=['GET'])
-def get_pizzas():
-    pizzas = Pizza.query.all()
-    return jsonify([pizza.to_dict() for pizza in pizzas])
+        response_body = {
+                "delete_successful": True,
+                "message": "Restaurant deleted."
+            }
 
+        response = make_response(
+            response_body,
+            200
+        )
+
+        return response
+
+    else:
+        return f"error: Restaurant not found", 404
+
+@app.route('/pizzas')
+def pizzas():
+    pizzas= []
+    for pizza in Pizza.query.all():
+        pizza_dict= pizza.to_dict()
+        pizzas.append(pizza_dict)
+
+    response = make_response(
+        pizzas,
+        200
+    )
+    return response
+
+
+@app.route('/pizzas/<int:id>', methods=['GET'])
+def get_pizza(id):
+    if request.method == 'GET':
+        pizzas=Pizza.query.filter_by(id=id).first()
+        pizza_dict= pizzas.to_dict()
+        
+            # pizzas = []
+            # for pizza in Pizza.query.all():
+            #     pizza_dict = pizza.to_dict()
+            #     pizzas.append(pizza_dict)
+
+        response = make_response(
+            pizza_dict,
+            200
+        )
+
+        return response
+    else:
+        return f"error:Pizza not found", 404
+    
 @app.route('/restaurant_pizzas', methods=['POST'])
 def create_restaurant_pizza():
     data = request.json
@@ -72,5 +121,6 @@ def create_restaurant_pizza():
     return jsonify(pizza.to_dict()), 201
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5555, debug=True)
+
 
