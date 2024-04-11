@@ -16,110 +16,112 @@ def home():
 
 @app.route('/restaurants')
 def restaurants():
-    restaurants= []
-    for restaurant in Restaurant.query.all():
-        restaurant_dict= restaurant.to_dict()
-        restaurants.append(restaurant_dict)
-
-    response = make_response(
-        restaurants,
-        200
-    )
-    return response
-
-@app.route('/restaurants/<int:id>', methods=['GET'])
-def get_restaurant(id):
-    if request.method == 'GET':
-        restaurants=[restaurant.to_dict() for restaurant in Restaurant.query.all()]
-
-        response = make_response(
-            restaurants,
-            200
-        )
-
-        return response
-    else:
-        return f"error:Restaurant not found", 404
-
-@app.route('/restaurants/<int:id>', methods=['DELETE'])
-def delete_restaurant(id):
-    restaurant = Restaurant.query.get(id)
-    if restaurant:
-        db.session.delete(restaurant)
-        db.session.commit()
-
-        response_body = {
-                "delete_successful": True,
-                "message": "Restaurant deleted."
-            }
-
-        response = make_response(
-            response_body,
-            200
-        )
-
-        return response
-
-    else:
-        return f"error: Restaurant not found", 404
-
-@app.route('/pizzas')
-def pizzas():
-    pizzas= []
-    for pizza in Pizza.query.all():
-        pizza_dict= pizza.to_dict()
-        pizzas.append(pizza_dict)
-
-    response = make_response(
-        pizzas,
-        200
-    )
-    return response
-
-
-@app.route('/pizzas/<int:id>', methods=['GET'])
-def get_pizza(id):
-    if request.method == 'GET':
-        pizzas=Pizza.query.filter_by(id=id).first()
-        pizza_dict= pizzas.to_dict()
-        
-            # pizzas = []
-            # for pizza in Pizza.query.all():
-            #     pizza_dict = pizza.to_dict()
-            #     pizzas.append(pizza_dict)
-
-        response = make_response(
-            pizza_dict,
-            200
-        )
-
-        return response
-    else:
-        return f"error:Pizza not found", 404
+    restaurants = Restaurant.query.all()
+    formatted_restaurants = [{
+        "id": restaurant.id,
+        "name": restaurant.name,
+        "address": restaurant.address
+    } for restaurant in restaurants]
+    return jsonify(formatted_restaurants), 200
     
-@app.route('/restaurant_pizzas', methods=['POST'])
-def create_restaurant_pizza():
-    data = request.json
-    price = data.get("price")
-    pizza_id = data.get("pizza_id")
-    restaurant_id = data.get("restaurant_id")
-
-    if not all([price, pizza_id, restaurant_id]):
-        return jsonify({"errors": ["price, pizza_id, and restaurant_id are required"]}), 400
-
-    # Checking if the pizza and restaurant exist
-    pizza = Pizza.query.get(pizza_id)
-    restaurant = Restaurant.query.get(restaurant_id)
-    if not pizza or not restaurant:
-        return jsonify({"error": "Pizza or Restaurant not found"}), 404
-
-    # Creating the RestaurantPizza
-    restaurant_pizza = RestaurantPizza(price=price, pizza_id=pizza_id, restaurant_id=restaurant_id)
-    db.session.add(restaurant_pizza)
+@app.route('/restaurants/<int:id>', methods=['GET', 'DELETE'])
+def restaurant_by_id(id):
+  restaurant = Restaurant.query.filter_by(id=id).first()
+  
+  if request.method == 'GET':
+    if restaurant:
+        restaurant_data = {
+            'id': restaurant.id,
+            'name': restaurant.name,
+            'address': restaurant.address,
+            'pizzas': [{'id': pizza.id, 'name': pizza.name, 'ingredients': pizza.ingredients} for pizza in restaurant.pizzas]
+        }
+        return jsonify(restaurant_data), 200
+    else:
+          response_body = {
+            "error": "Restaurant not found"
+          }
+          response = make_response(
+            response_body,
+            404
+          )
+          return response
+    
+  elif request.method == 'DELETE':
+    db.session.delete(restaurant)
     db.session.commit()
 
-    return jsonify(pizza.to_dict()), 201
+    response_body = {}
+    response = make_response(
+        response_body,
+        200
+    )
+    return response
+    
+@app.route('/pizzas')
+def pizzas():
+  pizzas = Pizza.query.all()
+  formatted_pizzas = [{
+        "id": pizza.id,
+        "name": pizza.name,
+        "ingredients": pizza.ingredients
+    } for pizza in pizzas]
+  return jsonify(formatted_pizzas), 200
+   
 
+@app.route('/restaurant_pizzas', methods=['GET', 'POST'])
+def restaurant_pizzas():
+  restaurant_pizzas = RestaurantPizza.query.all()
+  
+  if request.method == 'GET':
+    formatted_restaurant_pizzas = [{
+        "price": restaurant_pizza.price,
+        "pizza_id": restaurant_pizza.pizza_id,
+        "restaurant_id": restaurant_pizza.restaurant_id
+    } for restaurant_pizza in restaurant_pizzas]
+    return jsonify(formatted_restaurant_pizzas), 200
+
+  elif request.method == 'POST':
+    data = request.get_json()
+    
+    # Check if the provided pizza_id exists in the database
+    existing_pizza = Pizza.query.get(data['pizza_id'])
+    if existing_pizza is None:
+        return make_response({'error': 'Invalid pizza_id'}, 400)
+
+    # Check if the provided restaurant_id exists in the database
+    existing_restaurant = Restaurant.query.get(data['restaurant_id'])
+    if existing_restaurant is None:
+        return make_response({'error': 'Invalid restaurant_id'}, 400)
+
+    # Create the new RestaurantPizza object
+    new_restaurant_pizza = RestaurantPizza(
+        price=data['price'],
+        pizza_id=data['pizza_id'],
+        restaurant_id=data['restaurant_id']
+    )
+    db.session.add(new_restaurant_pizza)
+    
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return make_response(
+          {"errors": ["validation errors"]},
+          500
+          )
+
+    # Fetch the related pizza object associated with the newly created restaurant_pizza
+    related_pizza = Pizza.query.get(data['pizza_id'])
+
+    response_data = {
+        "id": related_pizza.id,
+        "name": related_pizza.name,
+        "ingredients": related_pizza.ingredients
+    }
+
+    return make_response(response_data, 201)
+  
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
 
