@@ -14,7 +14,7 @@ db.init_app(app)
 def home():
     return '<h1>Pizza Restaurant</h1>'
 
-@app.route('/restaurants', methods=['GET'])
+@app.route('/restaurants')
 def restaurants():
     restaurants= []
     for restaurant in Restaurant.query.all():
