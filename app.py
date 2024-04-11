@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_migrate import Migrate
 from models import db, Restaurant, Pizza, RestaurantPizza
 
@@ -15,9 +15,17 @@ def home():
     return '<h1>Pizza Restaurant</h1>'
 
 @app.route('/restaurants', methods=['GET'])
-def get_restaurants():
-    restaurants = Restaurant.query.all()
-    return jsonify([restaurant.to_dict() for restaurant in restaurants])
+def restaurants():
+    restaurants= []
+    for restaurant in Restaurant.query.all():
+        restaurant_dict= restaurant.to_dict()
+        restaurants.append(restaurant_dict)
+
+    response = make_response(
+        restaurants,
+        200
+    )
+    return response
 
 @app.route('/restaurants/<int:id>', methods=['GET'])
 def get_restaurant(id):
