@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify, make_response
 from flask_migrate import Migrate
-from models import db, Restaurant, Pizza, RestaurantPizza
+from models.restaurant import Restaurant
+from models.pizza import Pizza
+from models.restaurant_pizza import RestaurantPizza
+from models import db
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pizzarestaurant.db'
