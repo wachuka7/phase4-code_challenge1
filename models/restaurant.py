@@ -14,7 +14,7 @@ class Restaurant(db.Model, SerializerMixin):
     address = db.Column(db.String(90), nullable=False)
 
     restaurant_pizzas = db.relationship('RestaurantPizza', back_populates='restaurant', cascade='all, delete-orphan' )
-
+    
     pizzas = association_proxy('restaurant_pizzas', 'pizza',
                                  creator=lambda pizza_obj: RestaurantPizza(pizza=pizza_obj))
     

@@ -1,13 +1,16 @@
 from app import app
-from models import db, Pizza, Restaurant, RestaurantPizza
+from models.restaurant import Restaurant
+from models.pizza import Pizza
+from models.restaurant_pizza import RestaurantPizza
+from models import db
 
 with app.app_context():
 
     # Delete all rows in tables
     db.session.query(RestaurantPizza).delete()
+    db.session.query(Pizza).delete()
+    db.session.query(Restaurant).delete()
     db.session.commit()
-    Pizza.query.delete()
-    Restaurant.query.delete()
     
 
     # Add pizza
