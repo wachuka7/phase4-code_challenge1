@@ -29,29 +29,19 @@ with app.app_context():
     db.session.add_all([r1, r2])
     db.session.commit()
 
-    # Many-to-many relationship between pizzas and restaurants
-
-    # # Add restaurants to a pizza
-    # p1.restaurants.append(r1)
-    # p1.restaurants.append(r2)
-    # # Add pizzas to a restaurant
-    # r2.pizzas.append(p2)
-    # r2.pizzas.append(p3)
-    # r2.pizzas.append(p4)
-
     # Many-to-many relationship between pizza and restaurant through restaurant_pizza
 
     rp1 = RestaurantPizza(price= 15,                    
-                    restaurant_id=r1.id,
-                    pizza_id=p1.id)
+                    restaurant=r1,
+                    pizza=p1)
     
     rp2 = RestaurantPizza(price = 10,                    
-                    restaurant_id=r2.id,
-                    pizza_id=p2.id)
+                    restaurant=r2,
+                    pizza=p2)
     
     rp3 = RestaurantPizza(price =11,
-                        restaurant_id=r1.id,
-                        pizza_id=p2.id)
+                        restaurant=r1,
+                        pizza=p2)
                     
 
     db.session.add_all([rp1, rp2, rp3])

@@ -40,27 +40,20 @@ def restaurant_by_id(id):
             'pizzas': [{'id': pizza.id, 'name': pizza.name, 'ingredients': pizza.ingredients} for pizza in restaurant.pizzas]
         }
         return jsonify(restaurant_data), 200
-    else:
-          response_body = {
-            "error": "Restaurant not found"
-          }
-          response = make_response(
-            response_body,
-            404
-          )
-          return response
+    else:          
+        return jsonify({"error": "Restaurant not found"}), 404
     
   elif request.method == 'DELETE':
-    db.session.delete(restaurant)
-    db.session.commit()
+    if restaurant:
+      db.session.delete(restaurant)
+      db.session.commit()
 
-    response_body = {}
-    response = make_response(
-        response_body,
-        200
-    )
-    return response
+      return jsonify({}), 200
     
+    else:
+       return jsonify({"error": "Restaurant not found"}), 404
+
+
 @app.route('/pizzas')
 def pizzas():
   pizzas = Pizza.query.all()
